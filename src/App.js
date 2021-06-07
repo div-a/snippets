@@ -1,10 +1,31 @@
-import logo from './logo.svg';
 import './App.css';
+import Snippet from './Snippet';
+import styled from 'styled-components'
 import { useEffect, useState } from 'react';
 
 const { clipboard, ipcRenderer } = window.require("electron")
 
 function App() {
+
+  const Input = styled.input`
+    color: palevioletred;
+    font-size: 1em;
+    border: 2px solid palevioletred;
+    border-radius: 3px;
+    margin: 0.5em;
+    padding: 0.5em;
+    background-color: transparent;
+  `;
+
+  const SaveButton = styled.button`
+    color: palevioletred;
+    font-size: 1em;
+    border: 2px solid palevioletred;
+    border-radius: 3px;
+    margin: 0.5em;
+    padding: 0.5em;
+    background-color: transparent;
+  `;
 
   const [allSnippets, setAllSnippets] = useState([clipboard.readText()])
 
@@ -18,20 +39,21 @@ function App() {
     ipcRenderer.on('asynchronous-message', function (evt, message) {
       doStuff();
     });
-
   }, [allSnippets])
 
   return (
     <div className="App">
       <header className="App-header">
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-
-          {allSnippets.map((snip) => {
-            return (<div> {snip} </div>)
-          })}
-        </p>
+        <Input></Input>
       </header>
+      <body className="App-body">
+        {allSnippets.map((snip) => {
+          return <Snippet text={snip} ></Snippet>
+        })}
+      </body>
+      <footer className="App-footer">
+        <SaveButton> Save </SaveButton>
+      </footer>
     </div>
   );
 }
