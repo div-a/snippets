@@ -6,26 +6,31 @@ const { clipboard, ipcRenderer } = window.require("electron")
 
 function App() {
 
-  const [clipboardText, setClipboard] = useState('')
+  const [allSnippets, setAllSnippets] = useState([clipboard.readText()])
 
   const doStuff = () => {
-    console.log("doing stuff")
-    setClipboard(clipboard.readText());
-    setTimeout(doStuff, 1000);
+
+    if (allSnippets.length > 0 && clipboard.readText() != allSnippets[allSnippets.length - 1]) {
+      setAllSnippets([...allSnippets, clipboard.readText()])
+    }
+    else {
+      setTimeout(doStuff, 1000);
+    }
   }
 
   useEffect(() => {
     doStuff();
-  })
+  }, [allSnippets])
 
   return (
     <div className="App">
       <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
         <p>
           Edit <code>src/App.js</code> and save to reload.
 
-          {clipboardText}
+          {allSnippets.map((snip) => {
+            return (<div> {snip} </div>)
+          })}
         </p>
       </header>
     </div>
