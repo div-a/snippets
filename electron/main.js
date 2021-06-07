@@ -1,4 +1,4 @@
-const { app, globalShortcut, BrowserWindow, ipcMain } = require('electron');
+const { app, globalShortcut, BrowserWindow, webContents } = require('electron');
 const isDev = require('electron-is-dev');
 const path = require('path');
 
@@ -21,11 +21,12 @@ function createWindow() {
     mainWindow.loadURL(startURL);
 
     globalShortcut.register('CommandOrControl+G', () => {
-        console.log('Electron loves global shortcuts!')
+        mainWindow.webContents.send('asynchronous-message', { 'SAVED': 'File Saved' });
     })
     mainWindow.once('ready-to-show', () => mainWindow.show());
     mainWindow.on('closed', () => {
         mainWindow = null;
     });
 }
+
 app.on('ready', createWindow);

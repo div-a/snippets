@@ -9,17 +9,16 @@ function App() {
   const [allSnippets, setAllSnippets] = useState([clipboard.readText()])
 
   const doStuff = () => {
-
     if (allSnippets.length > 0 && clipboard.readText() != allSnippets[allSnippets.length - 1]) {
       setAllSnippets([...allSnippets, clipboard.readText()])
-    }
-    else {
-      setTimeout(doStuff, 1000);
     }
   }
 
   useEffect(() => {
-    doStuff();
+    ipcRenderer.on('asynchronous-message', function (evt, message) {
+      doStuff();
+    });
+
   }, [allSnippets])
 
   return (
