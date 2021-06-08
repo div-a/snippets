@@ -1,7 +1,7 @@
 import './App.css';
 import Snippet from './Snippet';
 import styled from 'styled-components'
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Dexie } from 'dexie';
 
 
@@ -41,23 +41,24 @@ function App() {
 
   let page = {};
 
-  const doStuff = async () => {
+  const doStuff = () => {
     const text = clipboard.readText();
     if (allSnippets.length > 0 && text != allSnippets[allSnippets.length - 1]) {
       setAllSnippets([...allSnippets, text])
-      await db.Snippet.add({
+      db.Snippet.add({
         text,
         pageId: page.id
       })
     }
-  }
+  };
 
   useEffect(() => {
-    ipcRenderer.on('asynchronous-message', async function (evt, message) {
-      await doStuff();
-    });
+    ipcRenderer.on('asynchronous-message', () => { doStuff(); });
 
-  }, [allSnippets])
+    return () => {
+      ipcRenderer.removeAllListeners();
+    };
+  }, [allSnippets]);
 
   useEffect(async () => {
     await db.Page.add({
