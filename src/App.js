@@ -2,8 +2,18 @@ import './App.css';
 import Snippet from './Snippet';
 import styled from 'styled-components'
 import { useEffect, useState } from 'react';
+import { Dexie } from 'dexie';
+
 
 const { clipboard, ipcRenderer } = window.require("electron")
+
+const db = new Dexie('Snippet');
+db.version(1).stores(
+  {
+    Snippet: "++id,text,pageId",
+    Page: "++id,name"
+  }
+)
 
 function App() {
 
@@ -29,17 +39,33 @@ function App() {
 
   const [allSnippets, setAllSnippets] = useState([clipboard.readText()])
 
-  const doStuff = () => {
-    if (allSnippets.length > 0 && clipboard.readText() != allSnippets[allSnippets.length - 1]) {
-      setAllSnippets([...allSnippets, clipboard.readText()])
+  let page = {};
+
+  const doStuff = async () => {
+    const text = clipboard.readText();
+    if (allSnippets.length > 0 && text != allSnippets[allSnippets.length - 1]) {
+      setAllSnippets([...allSnippets, text])
+      await db.Snippet.add({
+        text,
+        pageId: page.id
+      })
     }
   }
 
   useEffect(() => {
-    ipcRenderer.on('asynchronous-message', function (evt, message) {
-      doStuff();
+    ipcRenderer.on('asynchronous-message', async function (evt, message) {
+      await doStuff();
     });
+
   }, [allSnippets])
+
+  useEffect(async () => {
+    await db.Page.add({
+      name: ""
+    });
+
+    page = db.Page.where("name").equals("");
+  }, [])
 
   return (
     <div className="App">
