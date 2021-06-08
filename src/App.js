@@ -38,8 +38,7 @@ function App() {
   `;
 
   const [allSnippets, setAllSnippets] = useState([clipboard.readText()])
-
-  let page = {};
+  const [page, setPage] = useState({})
 
   const doStuff = () => {
     const text = clipboard.readText();
@@ -61,17 +60,19 @@ function App() {
   }, [allSnippets]);
 
   useEffect(async () => {
+    const newPageName = new Date().toISOString().substring(0, 19);
     await db.Page.add({
-      name: ""
+      name: newPageName
     });
 
-    page = db.Page.where("name").equals("");
+    setPage(await db.Page.where("name").equalsIgnoreCase(newPageName).first());
+
   }, [])
 
   return (
     <div className="App">
       <header className="App-header">
-        <Input></Input>
+        <Input value={page.name} ></Input>
       </header>
       <body className="App-body">
         {allSnippets.map((snip) => {
