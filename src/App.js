@@ -37,8 +37,31 @@ function App() {
     background-color: transparent;
   `;
 
+  const SnippetList = styled.div`
+    backgroud-color: #282c34;
+    height: 80vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    overflow-y: scroll;
+
+  `;
+
+  const PageList = styled.div`
+    backgroud-color: #282c34;
+    height: 80vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    overflow-y: scroll;
+  `;
+
   const [allSnippets, setAllSnippets] = useState([clipboard.readText()])
   const [page, setPage] = useState({})
+  const [allPages, setAllPages] = useState([])
+
 
   const doStuff = () => {
     const text = clipboard.readText();
@@ -60,6 +83,10 @@ function App() {
   }, [allSnippets]);
 
   useEffect(async () => {
+    console.log(allPages);
+  }, [allPages])
+
+  useEffect(async () => {
     const newPageName = new Date().toISOString().substring(0, 19);
     await db.Page.add({
       name: newPageName
@@ -67,6 +94,7 @@ function App() {
 
     setPage(await db.Page.where("name").equalsIgnoreCase(newPageName).first());
 
+    setAllPages(await db.Page.toArray())
   }, [])
 
   return (
@@ -75,9 +103,17 @@ function App() {
         <Input value={page.name} ></Input>
       </header>
       <body className="App-body">
-        {allSnippets.map((snip) => {
-          return <Snippet text={snip} ></Snippet>
-        })}
+        <PageList>
+          {allPages.map((page) => {
+            return <Snippet text={page.name} ></Snippet>
+          })}
+        </PageList>
+
+        <SnippetList>
+          {allSnippets.map((snip) => {
+            return <Snippet text={snip} ></Snippet>
+          })}
+        </SnippetList>
       </body>
       <footer className="App-footer">
         <SaveButton> Save </SaveButton>
