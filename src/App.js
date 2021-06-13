@@ -58,14 +58,24 @@ function App() {
     overflow-y: scroll;
   `;
 
-  const [allSnippets, setAllSnippets] = useState([clipboard.readText()])
+  const PageButton = styled.button`
+    background: transparent;
+    border-radius: 3px;
+    border: 2px solid palevioletred;
+    color: palevioletred;
+    margin: 0 1em;
+    padding: 0.25em 1em;
+    margin: 0.25em;
+  `;
+
+  const [allSnippets, setAllSnippets] = useState([])
   const [page, setPage] = useState({})
   const [allPages, setAllPages] = useState([])
 
 
   const doStuff = () => {
     const text = clipboard.readText();
-    if (allSnippets.length > 0 && text != allSnippets[allSnippets.length - 1]) {
+    if (allSnippets.length == 0 || (allSnippets.length > 0 && text != allSnippets[allSnippets.length - 1])) {
       setAllSnippets([...allSnippets, text])
       db.Snippet.add({
         text,
@@ -82,9 +92,6 @@ function App() {
     };
   }, [allSnippets]);
 
-  useEffect(async () => {
-    console.log(allPages);
-  }, [allPages])
 
   useEffect(async () => {
     const newPageName = new Date().toISOString().substring(0, 19);
@@ -97,6 +104,13 @@ function App() {
     setAllPages(await db.Page.toArray())
   }, [])
 
+  const selectPage = async (event) => {
+    console.log(event.target.innerText);
+    const selectedPage = allPages.filter(ap => ap.name === event.target.innerText);
+    setPage(selectedPage)
+
+  }
+
   return (
     <div className="App">
       <header className="App-header">
@@ -105,7 +119,7 @@ function App() {
       <body className="App-body">
         <PageList>
           {allPages.map((page) => {
-            return <Snippet text={page.name} ></Snippet>
+            return <PageButton onClick={selectPage}>{page.name}</PageButton>
           })}
         </PageList>
 
