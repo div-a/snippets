@@ -72,6 +72,8 @@ function App() {
 
   const [allSnippets, setAllSnippets] = useState([])
   const [page, setPage] = useState({ name: "" })
+  const [pageInput, setPageInput] = useState("")
+
   const [allPages, setAllPages] = useState([])
 
 
@@ -102,6 +104,8 @@ function App() {
       }
     }
 
+    fetchData()
+    setPageInput(page.name)
 
   }, [page]);
 
@@ -124,24 +128,30 @@ function App() {
     setPage(selectedPage)
   }
 
+  const onPageInputChange = (event) => {
+    setPageInput(event.target.value);
+    db.Page.update(page.id, { name: event.target.value })
+  }
+
+
   return (
     <div className="App">
       <header className="App-header">
-        <Input value={page.name} ></Input>
+        <Input type="text" value={pageInput} onChange={onPageInputChange} ></Input>
       </header>
-      <body className="App-body">
+      <div className="App-body">
         <PageList>
           {allPages.map((page) => {
-            return <PageButton onClick={selectPage}>{page.name}</PageButton>
+            return <PageButton onClick={selectPage} key={page.id}>{page.name}</PageButton>
           })}
         </PageList>
 
         <SnippetList>
-          {allSnippets?.map((snip) => {
-            return <Snippet text={snip} ></Snippet>
+          {allSnippets?.map((snip, snipIdx) => {
+            return <Snippet text={snip} key={snipIdx} ></Snippet>
           })}
         </SnippetList>
-      </body>
+      </div>
       <footer className="App-footer">
         <SaveButton> Save </SaveButton>
       </footer>
