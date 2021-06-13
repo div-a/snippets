@@ -26,7 +26,7 @@ padding: 0.5em;
 background-color: transparent;
 `;
 
-const SaveButton = styled.button`
+const ActionButton = styled.button`
 color: palevioletred;
 font-size: 1em;
 border: 2px solid palevioletred;
@@ -97,26 +97,21 @@ function App() {
   }, [allSnippets]);
 
   useEffect(() => {
-    async function fetchData() {
-      if (page.id) {
+    async function fetchSnippets() {
+      if (page?.id) {
         const pageSnippets = await db.Snippet.where("pageId").anyOf([page.id]).toArray();
         setAllSnippets(pageSnippets.map(ps => ps.text))
       }
     }
 
-    fetchData()
-    setPageInput(page.name)
+    fetchSnippets()
+    setPageInput(page?.name)
 
   }, [page]);
 
 
   useEffect(() => {
     async function fetchData() {
-      const newPageName = new Date().toISOString().substring(0, 19);
-      const res = await db.Page.add({
-        name: newPageName
-      });
-      setPage(await db.Page.where({ id: res }).first());
       setAllPages(await db.Page.toArray())
     }
 
@@ -128,9 +123,17 @@ function App() {
     setPage(selectedPage)
   }
 
-  const onPageInputChange = (event) => {
+  const onNewPage = async (event) => {
+    const newPageName = new Date().toISOString().substring(0, 19);
+    const res = await db.Page.add({
+      name: newPageName
+    });
+    setPage(await db.Page.where({ id: res }).first());
+  }
+
+  const onPageInputChange = async (event) => {
     setPageInput(event.target.value);
-    db.Page.update(page.id, { name: event.target.value })
+    await db.Page.update(page.id, { name: pageInput });
   }
 
 
@@ -153,7 +156,9 @@ function App() {
         </SnippetList>
       </div>
       <footer className="App-footer">
-        <SaveButton> Save </SaveButton>
+        <ActionButton onClick={onNewPage}> New </ActionButton>
+
+        <ActionButton> Save </ActionButton>
       </footer>
     </div>
   );
