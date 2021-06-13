@@ -92,6 +92,13 @@ function App() {
     };
   }, [allSnippets]);
 
+  useEffect(async () => {
+    const pageSnippets = await db.Snippet.where("pageId").equalsIgnoreCase(page.id?.toString() || "").toArray();
+    if (pageSnippets && pageSnippets.length > 0) {
+      setAllSnippets(pageSnippets)
+    }
+  }, [page]);
+
 
   useEffect(async () => {
     const newPageName = new Date().toISOString().substring(0, 19);
@@ -106,9 +113,8 @@ function App() {
 
   const selectPage = async (event) => {
     console.log(event.target.innerText);
-    const selectedPage = allPages.filter(ap => ap.name === event.target.innerText);
+    const selectedPage = allPages.filter(ap => ap.name === event.target.innerText)[0];
     setPage(selectedPage)
-
   }
 
   return (
@@ -124,7 +130,7 @@ function App() {
         </PageList>
 
         <SnippetList>
-          {allSnippets.map((snip) => {
+          {allSnippets?.map((snip) => {
             return <Snippet text={snip} ></Snippet>
           })}
         </SnippetList>
