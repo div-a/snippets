@@ -18,12 +18,11 @@ db.version(1).stores(
 
 const Input = styled.input`
 color: palevioletred;
-font-size: 1em;
-border: 2px solid palevioletred;
-border-radius: 3px;
-margin: 0.5em;
-padding: 0.5em;
+font-size: 20px;
+padding: 1em;
 background-color: transparent;
+margin-right: auto;
+border: none;
 `;
 
 const ActionButton = styled.button`
@@ -38,34 +37,43 @@ background-color: transparent;
 
 const SnippetList = styled.div`
 backgroud-color: #282c34;
-height: 80vh;
+height: 90vh;
 display: flex;
 flex-direction: column;
 align-items: center;
 justify-content: flex-start;
 overflow-y: scroll;
+width: 100%;
 `;
 
 const PageList = styled.div`
 backgroud-color: #282c34;
-height: 80vh;
+height: 100vh;
 display: flex;
 flex-direction: column;
 align-items: center;
 justify-content: flex-start;
 overflow-y: scroll;
-min-width: 20%;
+width: 30%;
+border-right: 1px solid palevioletred;
 `;
 
-const PageButton = styled.button`
+const PageButton = styled.div`
 background: transparent;
-border-radius: 3px;
-border: 2px solid palevioletred;
 color: palevioletred;
-margin: 0 1em;
-padding: 0.25em 1em;
-margin: 0.25em;
+padding: 0.5em 1em;
+width: 100%;
+border-bottom: 1px solid palevioletred;
 `;
+
+const PageListHeader = styled.div`
+color: palevioletred;
+padding: 0.6em 1em;
+width: 100%;
+border-bottom: 1px solid palevioletred;
+font-size: 20px;
+`;
+
 
 function App() {
 
@@ -129,6 +137,7 @@ function App() {
       name: newPageName
     });
     setPage(await db.Page.where({ id: res }).first());
+    setAllPages(await db.Page.toArray())
   }
 
   const onPageInputChange = async (event) => {
@@ -139,27 +148,28 @@ function App() {
 
   return (
     <div className="App">
-      <header className="App-header">
-        <Input type="text" value={pageInput} onChange={onPageInputChange} ></Input>
-      </header>
       <div className="App-body">
         <PageList>
+          <PageListHeader>All Pages</PageListHeader>
           {allPages.map((page) => {
             return <PageButton onClick={selectPage} key={page.id}>{page.name}</PageButton>
           })}
         </PageList>
 
         <SnippetList>
+
+          {page.id && <Input type="text" value={pageInput} onChange={onPageInputChange} ></Input>}
+
           {allSnippets?.map((snip, snipIdx) => {
             return <Snippet text={snip} key={snipIdx} ></Snippet>
           })}
+
+          <footer className="App-footer">
+            <ActionButton onClick={onNewPage}> New </ActionButton>
+          </footer>
         </SnippetList>
       </div>
-      <footer className="App-footer">
-        <ActionButton onClick={onNewPage}> New </ActionButton>
 
-        <ActionButton> Save </ActionButton>
-      </footer>
     </div>
   );
 }

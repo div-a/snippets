@@ -5,11 +5,12 @@ export default function Snippet({ text }) {
   const Container = styled.div`
     background: transparent;
     border-radius: 3px;
-    border: 2px solid palevioletred;
+    border: 1px solid palevioletred;
     color: palevioletred;
     margin: 0 1em;
-    padding: 0.25em 1em;
-    margin: 0.25em;
+    padding: 0.5em 2em;
+    margin: 0.25em 2em;
+    
   `
 
   return (

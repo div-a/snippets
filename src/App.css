@@ -7,24 +7,14 @@
   pointer-events: none;
 }
 
-.App-header {
-  background-color: #282c34;
-  height: 10vh;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: flex-start;
-}
-
 .App-body {
   background-color: #282c34;
-  height: 80vh;
+  height: 100vh;
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: flex-start;
 }
-
 
 .App-footer {
   background-color: #282c34;
@@ -33,6 +23,8 @@
   flex-direction: row;
   align-items: center;
   justify-content: flex-end;
+  margin-top: auto;
+  margin-left: auto;
 }
 .App-link {
   color: #61dafb;
