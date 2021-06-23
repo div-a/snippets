@@ -1,7 +1,7 @@
 import './App.css';
 import Snippet from './Snippet';
 import styled from 'styled-components'
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { Dexie } from 'dexie';
 
 
@@ -22,7 +22,13 @@ font-size: 20px;
 padding: 1em;
 background-color: transparent;
 margin-right: auto;
-border: none;
+border-bottom: 1px solid palevioletred;
+border-left: 0px;
+border-right: 0px;
+border-top: 0px;
+width: 100%;
+margin-bottom: 3%;
+outline: none;
 `;
 
 const ActionButton = styled.button`
@@ -72,6 +78,7 @@ padding: 0.6em 1em;
 width: 100%;
 border-bottom: 1px solid palevioletred;
 font-size: 20px;
+font-weight: 600;
 `;
 
 
@@ -142,7 +149,7 @@ function App() {
 
   const onPageInputChange = async (event) => {
     setPageInput(event.target.value);
-    await db.Page.update(page.id, { name: pageInput });
+    await db.Page.update(page.id, { name: event.target.value });
   }
 
 
@@ -161,7 +168,7 @@ function App() {
           {page.id && <Input type="text" value={pageInput} onChange={onPageInputChange} ></Input>}
 
           {allSnippets?.map((snip, snipIdx) => {
-            return <Snippet text={snip} key={snipIdx} ></Snippet>
+            return <Snippet text={snip} key={snipIdx}  ></Snippet>
           })}
 
           <footer className="App-footer">
