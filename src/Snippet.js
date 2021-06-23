@@ -1,13 +1,13 @@
 import styled from 'styled-components'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faTrash } from '@fortawesome/free-solid-svg-icons'
-import { faPen } from '@fortawesome/free-solid-svg-icons'
-import { useEffect, useState, useRef, useLayoutEffect } from 'react';
+import { useEffect, useState, useRef, useLayoutEffect, useContext } from 'react';
+import { DatabaseContext } from './App';
 
+export default function Snippet({ snippetProp }) {
 
-export default function Snippet({ text }) {
-
-  const [snippetText, setSnippetText] = useState(text);
+  const db = useContext(DatabaseContext);
+  const [snippet, setSnippet] = useState(snippetProp);
   const WIDTH = '70ch';
   const [height, setHeight] = useState('0px');
   const textarea_ref = useRef(null);
@@ -33,40 +33,31 @@ export default function Snippet({ text }) {
     color: palevioletred;
   `
 
-  useLayoutEffect(() => {                                           // useLayoutEffect TO AVOID FLICKERING
-    textarea_ref.current.style.height = '0px';                    // NEEDS TO SET HEIGHT TO ZERO
-    const scrollHeight = textarea_ref.current.scrollHeight;       // TO READ THE CORRECT SCROLL HEIGHT WHEN IT SHRINKS
-    textarea_ref.current.removeAttribute('style');                // REMOVE INLINE STYLE THAT WAS ADDED WITH 0px
-    setHeight(scrollHeight + 2 + 'px');                             // NEEDS TO ADD 2. I THINK IT'S BECAUSE OF THE BORDER
-    console.log(scrollHeight)
-  }, [snippetText]);
+  useLayoutEffect(() => {
+    textarea_ref.current.style.height = '0px';
+    const scrollHeight = textarea_ref.current.scrollHeight;
+    textarea_ref.current.removeAttribute('style');
+    setHeight(scrollHeight + 2 + 'px');
+  }, [snippet]);
 
 
   useEffect(() => {
-    setSnippetText(text);
+    setSnippet(snippetProp);
   }, []);
 
-  useEffect(() => {
-    textarea_ref.current.style.height = '0px';                    // NEEDS TO SET HEIGHT TO ZERO
-    const scrollHeight = textarea_ref.current.scrollHeight;       // TO READ THE CORRECT SCROLL HEIGHT WHEN IT SHRINKS
-    textarea_ref.current.removeAttribute('style');                // REMOVE INLINE STYLE THAT WAS ADDED WITH 0px
-    setHeight(scrollHeight + 2 + 'px');
-  }, [textarea_ref.current]);
-
-  const setText = (event) => {
-    setSnippetText(event.target.value);
-    // setHeight(1 + Math.ceil(event.target.value.length / (WIDTH / 2)) + 'ch')
+  const setText = async (event) => {
+    setSnippet({ ...snippet.pageId, ...snippet.id, text: event.target.value });
+    await db.Snippet.update(snippet.id, { text: event.target.value });
   }
 
   return (
     <div>
       <Container>
         {/* <div style={{ "display": "flex", "flex-direction": "row", "justify-content": "flex-end" }}>
-          <FontAwesomeIcon style={{ "color": 'palevioletred' }} icon={faPen} />
           <FontAwesomeIcon style={{ "color": 'palevioletred' }} icon={faTrash} />
         </div> */}
 
-        <SnippetText value={snippetText} onChange={setText} width={WIDTH} height={height} ref={textarea_ref}>
+        <SnippetText value={snippet.text} onChange={setText} width={WIDTH} height={height} ref={textarea_ref}>
         </SnippetText>
       </Container>
     </div>

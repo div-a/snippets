@@ -1,8 +1,9 @@
 import './App.css';
 import Snippet from './Snippet';
 import styled from 'styled-components'
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useContext, createContext } from 'react';
 import { Dexie } from 'dexie';
+
 
 
 const { clipboard, ipcRenderer } = window.require("electron")
@@ -14,6 +15,8 @@ db.version(1).stores(
     Page: "++id,name"
   }
 )
+
+export const DatabaseContext = createContext(db);
 
 
 const Input = styled.input`
@@ -96,10 +99,11 @@ function App() {
     const newSnippet = clipboard.readText();
     if (allSnippets.length == 0 || (allSnippets.length > 0 && newSnippet != allSnippets[allSnippets.length - 1])) {
       setAllSnippets([...allSnippets, newSnippet])
-      await db.Snippet.add({
+      var snippetId = await db.Snippet.add({
         text: newSnippet,
         pageId: page.id
       })
+      console.log("snippetId,", snippetId)
     }
   };
 
@@ -115,7 +119,7 @@ function App() {
     async function fetchSnippets() {
       if (page?.id) {
         const pageSnippets = await db.Snippet.where("pageId").anyOf([page.id]).toArray();
-        setAllSnippets(pageSnippets.map(ps => ps.text))
+        setAllSnippets(pageSnippets)
       }
     }
 
@@ -154,30 +158,31 @@ function App() {
 
 
   return (
-    <div className="App">
-      <div className="App-body">
-        <PageList>
-          <PageListHeader>All Pages</PageListHeader>
-          {allPages.map((page) => {
-            return <PageButton onClick={selectPage} key={page.id}>{page.name}</PageButton>
-          })}
-        </PageList>
+    <DatabaseContext.Provider value={db}>
+      <div className="App">
+        <div className="App-body">
+          <PageList>
+            <PageListHeader>All Pages</PageListHeader>
+            {allPages.map((page) => {
+              return <PageButton onClick={selectPage} key={page.id}>{page.name}</PageButton>
+            })}
+          </PageList>
 
-        <SnippetList>
+          <SnippetList>
 
-          {page.id && <Input type="text" value={pageInput} onChange={onPageInputChange} ></Input>}
+            {page.id && <Input type="text" value={pageInput} onChange={onPageInputChange} ></Input>}
 
-          {allSnippets?.map((snip, snipIdx) => {
-            return <Snippet text={snip} key={snipIdx}  ></Snippet>
-          })}
+            {allSnippets?.map((snip, snipIdx) => {
+              return <Snippet snippetProp={snip} key={snipIdx}  ></Snippet>
+            })}
 
-          <footer className="App-footer">
-            <ActionButton onClick={onNewPage}> New </ActionButton>
-          </footer>
-        </SnippetList>
+            <footer className="App-footer">
+              <ActionButton onClick={onNewPage}> New </ActionButton>
+            </footer>
+          </SnippetList>
+        </div>
       </div>
-
-    </div>
+    </DatabaseContext.Provider>
   );
 }
 
