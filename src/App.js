@@ -20,33 +20,40 @@ export const DatabaseContext = createContext(db);
 
 
 const Input = styled.input`
-color: palevioletred;
-font-size: 20px;
-padding: 1em;
+color: #000000BF;
+font-size: 28px;
+padding: 0.75em;
 background-color: transparent;
 margin-right: auto;
-border-bottom: 1px solid palevioletred;
+border-bottom: 1px solid #000000BF;
 border-left: 0px;
 border-right: 0px;
 border-top: 0px;
 width: 100%;
 margin-bottom: 3%;
 outline: none;
+font-weight: 550;
 `;
 
 const ActionButton = styled.button`
-color: palevioletred;
+color: #000000BF;
 font-size: 1em;
-border: 2px solid palevioletred;
+border: 2px solid #000000BF;
 border-radius: 3px;
 margin: 0.5em;
 padding: 0.5em;
 background-color: transparent;
 `;
 
+const PageActions = styled.div`
+display: flex;
+justify-content: flex-end;
+flex-direction: row;
+width: 100%;
+`;
+
 const SnippetList = styled.div`
-backgroud-color: #282c34;
-height: 90vh;
+height: 100vh;
 display: flex;
 flex-direction: column;
 align-items: center;
@@ -56,7 +63,6 @@ width: 100%;
 `;
 
 const PageList = styled.div`
-backgroud-color: #282c34;
 height: 100vh;
 display: flex;
 flex-direction: column;
@@ -64,22 +70,22 @@ align-items: center;
 justify-content: flex-start;
 overflow-y: scroll;
 width: 30%;
-border-right: 1px solid palevioletred;
+border-right: 1px solid #000000BF;
 `;
 
 const PageButton = styled.div`
 background: transparent;
-color: palevioletred;
+color: #000000BF;
 padding: 0.5em 1em;
 width: 100%;
-border-bottom: 1px solid palevioletred;
+border-bottom: 1px solid #000000BF;
 `;
 
 const PageListHeader = styled.div`
-color: palevioletred;
+color: #000000BF;
 padding: 0.6em 1em;
 width: 100%;
-border-bottom: 1px solid palevioletred;
+border-bottom: 1px solid #000000BF;
 font-size: 20px;
 font-weight: 600;
 `;
@@ -87,23 +93,21 @@ font-weight: 600;
 
 function App() {
 
-
   const [allSnippets, setAllSnippets] = useState([])
   const [page, setPage] = useState({ name: "" })
   const [pageInput, setPageInput] = useState("")
-
   const [allPages, setAllPages] = useState([])
 
-
   const addSnippet = async () => {
-    const newSnippet = clipboard.readText();
-    if (allSnippets.length == 0 || (allSnippets.length > 0 && newSnippet != allSnippets[allSnippets.length - 1])) {
-      setAllSnippets([...allSnippets, newSnippet])
-      var snippetId = await db.Snippet.add({
-        text: newSnippet,
+    const newSnippetText = clipboard.readText();
+    if (allSnippets.length == 0 || (allSnippets.length > 0 && newSnippetText != allSnippets[allSnippets.length - 1].text)) {
+      let newSnippet = {
+        text: newSnippetText,
         pageId: page.id
-      })
-      console.log("snippetId,", snippetId)
+      }
+      var snippetId = await db.Snippet.add(newSnippet)
+      newSnippet.id = snippetId;
+      setAllSnippets([...allSnippets, newSnippet])
     }
   };
 
@@ -156,6 +160,10 @@ function App() {
     await db.Page.update(page.id, { name: event.target.value });
   }
 
+  const deleteCallback = async (snip) => {
+    await db.Snippet.delete(snip.id);
+    setAllSnippets(allSnippets.filter(s => s.id != snip.id));
+  }
 
   return (
     <DatabaseContext.Provider value={db}>
@@ -169,15 +177,18 @@ function App() {
           </PageList>
 
           <SnippetList>
+            <PageActions>
+              <ActionButton onClick={onNewPage}> New </ActionButton>
+
+            </PageActions>
 
             {page.id && <Input type="text" value={pageInput} onChange={onPageInputChange} ></Input>}
 
             {allSnippets?.map((snip, snipIdx) => {
-              return <Snippet snippetProp={snip} key={snipIdx}  ></Snippet>
+              return <Snippet snippetProp={snip} key={snipIdx} deleteCallback={deleteCallback} ></Snippet>
             })}
 
             <footer className="App-footer">
-              <ActionButton onClick={onNewPage}> New </ActionButton>
             </footer>
           </SnippetList>
         </div>

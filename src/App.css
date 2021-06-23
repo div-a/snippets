@@ -8,7 +8,7 @@
 }
 
 .App-body {
-  background-color: #282c34;
+  background-color: #fffdfc;
   height: 100vh;
   display: flex;
   flex-direction: row;
@@ -17,7 +17,7 @@
 }
 
 .App-footer {
-  background-color: #282c34;
+  background-color: #fffdfc;
   height: 10vh;
   display: flex;
   flex-direction: row;
