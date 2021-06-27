@@ -1,5 +1,7 @@
 import './App.css';
 import Snippet from './Snippet';
+import RevisionSnippet from './RevisionSnippet';
+
 import styled from 'styled-components'
 import { useEffect, useState, useContext, createContext } from 'react';
 import { Dexie } from 'dexie';
@@ -11,7 +13,7 @@ const { clipboard, ipcRenderer } = window.require("electron")
 const db = new Dexie('Snippet');
 db.version(1).stores(
   {
-    Snippet: "++id,text,pageId",
+    Snippet: "++id,text,pageId,reviseAt",
     Page: "++id,name"
   }
 )
@@ -81,6 +83,10 @@ width: 100%;
 border-bottom: 1px solid #000000BF;
 `;
 
+const ReviseButton = styled(PageButton)`
+  font-weight: bold;
+`
+
 const PageListHeader = styled.div`
 color: #000000BF;
 padding: 0.6em 1em;
@@ -103,7 +109,8 @@ function App() {
     if (allSnippets.length == 0 || (allSnippets.length > 0 && newSnippetText != allSnippets[allSnippets.length - 1].text)) {
       let newSnippet = {
         text: newSnippetText,
-        pageId: page.id
+        pageId: page.id,
+        reviseAt: Date.now()
       }
       var snippetId = await db.Snippet.add(newSnippet)
       newSnippet.id = snippetId;
@@ -165,24 +172,48 @@ function App() {
     setAllSnippets(allSnippets.filter(s => s.id != snip.id));
   }
 
+
+  const revise = async (event) => {
+    setPage(null);
+    const revisionSnippets = await db.Snippet.orderBy("reviseAt").toArray();
+
+    setAllSnippets(revisionSnippets)
+  }
+
   return (
     <DatabaseContext.Provider value={db}>
       <div className="App">
         <div className="App-body">
           <PageList>
             <PageListHeader>All Pages</PageListHeader>
+            <ReviseButton onClick={revise} key="revise">Revise</ReviseButton>
             {allPages.map((page) => {
               return <PageButton onClick={selectPage} key={page.id}>{page.name}</PageButton>
             })}
           </PageList>
 
-          <SnippetList>
+          {!page &&
+            <SnippetList>
+              <Input type="text" value={"Revise"} ></Input>
+
+              {allSnippets?.map((snip, snipIdx) => {
+                if (snip.reviseAt < Date.now()) {
+                  return <RevisionSnippet snippetProp={snip} key={snipIdx} deleteCallback={deleteCallback} ></RevisionSnippet>
+                }
+                else {
+                  return <Snippet snippetProp={snip} key={snipIdx} deleteCallback={deleteCallback} ></Snippet>
+                }
+              })}
+
+            </SnippetList>
+          }
+
+          {page && <SnippetList>
             <PageActions>
               <ActionButton onClick={onNewPage}> New </ActionButton>
-
             </PageActions>
 
-            {page.id && <Input type="text" value={pageInput} onChange={onPageInputChange} ></Input>}
+            {page.id && <Input type="text" value={pageInput} ></Input>}
 
             {allSnippets?.map((snip, snipIdx) => {
               return <Snippet snippetProp={snip} key={snipIdx} deleteCallback={deleteCallback} ></Snippet>
@@ -190,7 +221,7 @@ function App() {
 
             <footer className="App-footer">
             </footer>
-          </SnippetList>
+          </SnippetList>}
         </div>
       </div>
     </DatabaseContext.Provider>
