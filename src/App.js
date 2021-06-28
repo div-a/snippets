@@ -27,7 +27,7 @@ font-size: 28px;
 padding: 0.75em;
 background-color: transparent;
 margin-right: auto;
-border-bottom: 1px solid #000000BF;
+border-bottom: 1px solid #00000038;
 border-left: 0px;
 border-right: 0px;
 border-top: 0px;
@@ -72,15 +72,15 @@ align-items: center;
 justify-content: flex-start;
 overflow-y: scroll;
 width: 30%;
-border-right: 1px solid #000000BF;
+border-right: 1px solid #00000038;
 `;
 
 const PageButton = styled.div`
 background: transparent;
-color: #000000BF;
+background-color: ${props => props.isSelected ? '#f7f5f2' : ''};
 padding: 0.5em 1em;
 width: 100%;
-border-bottom: 1px solid #000000BF;
+// border-bottom: 1px solid #000000BF;
 `;
 
 const ReviseButton = styled(PageButton)`
@@ -91,7 +91,7 @@ const PageListHeader = styled.div`
 color: #000000BF;
 padding: 0.6em 1em;
 width: 100%;
-border-bottom: 1px solid #000000BF;
+border-bottom: 1px solid #00000038;
 font-size: 20px;
 font-weight: 600;
 `;
@@ -100,7 +100,7 @@ font-weight: 600;
 function App() {
 
   const [allSnippets, setAllSnippets] = useState([])
-  const [page, setPage] = useState({ name: "" })
+  const [page, setPage] = useState(null)
   const [pageInput, setPageInput] = useState("")
   const [allPages, setAllPages] = useState([])
 
@@ -119,7 +119,7 @@ function App() {
   };
 
   useEffect(() => {
-    ipcRenderer.on('asynchronous-message', async () => { await addSnippet(); });
+    ipcRenderer.on('asynchronous-message', async () => { if (page) await addSnippet(); });
 
     return () => {
       ipcRenderer.removeAllListeners();
@@ -143,6 +143,7 @@ function App() {
   useEffect(() => {
     async function fetchData() {
       setAllPages(await db.Page.toArray())
+      await revise();
     }
 
     fetchData();
@@ -163,6 +164,8 @@ function App() {
   }
 
   const onPageInputChange = async (event) => {
+    let p = allPages.find(p => p.id == page.id);
+    p.name = event.target.value;
     setPageInput(event.target.value);
     await db.Page.update(page.id, { name: event.target.value });
   }
@@ -172,11 +175,20 @@ function App() {
     setAllSnippets(allSnippets.filter(s => s.id != snip.id));
   }
 
+  const tickCallback = async (snippet) => {
+    const filteredSnippets = allSnippets.filter(s => s.id != snippet.id);
+    setAllSnippets(filteredSnippets);
+  }
+
+  const crossCallback = async (snippet) => {
+    const filteredSnippets = allSnippets.filter(s => s.id != snippet.id);
+    setAllSnippets(filteredSnippets);
+  }
+
 
   const revise = async (event) => {
     setPage(null);
     const revisionSnippets = await db.Snippet.orderBy("reviseAt").toArray();
-
     setAllSnippets(revisionSnippets)
   }
 
@@ -186,9 +198,11 @@ function App() {
         <div className="App-body">
           <PageList>
             <PageListHeader>All Pages</PageListHeader>
-            <ReviseButton onClick={revise} key="revise">Revise</ReviseButton>
-            {allPages.map((page) => {
-              return <PageButton onClick={selectPage} key={page.id}>{page.name}</PageButton>
+            <ReviseButton onClick={revise} key="revise" isSelected={page == null}>Revise</ReviseButton>
+            {allPages.map((p) => {
+              const selected = (p && page && page.id == p.id);
+              console.log(p)
+              return <PageButton onClick={selectPage} key={p.id} isSelected={selected}>{p.name}</PageButton>
             })}
           </PageList>
 
@@ -198,11 +212,11 @@ function App() {
 
               {allSnippets?.map((snip, snipIdx) => {
                 if (snip.reviseAt < Date.now()) {
-                  return <RevisionSnippet snippetProp={snip} key={snipIdx} deleteCallback={deleteCallback} ></RevisionSnippet>
+                  return <RevisionSnippet snippetProp={snip} key={snip.id} tickCallback={tickCallback} crossCallback={crossCallback} ></RevisionSnippet>
                 }
-                else {
-                  return <Snippet snippetProp={snip} key={snipIdx} deleteCallback={deleteCallback} ></Snippet>
-                }
+                // else {
+                //   return <Snippet snippetProp={snip} key={snipIdx} deleteCallback={deleteCallback} ></Snippet>
+                // }
               })}
 
             </SnippetList>
@@ -213,7 +227,7 @@ function App() {
               <ActionButton onClick={onNewPage}> New </ActionButton>
             </PageActions>
 
-            {page.id && <Input type="text" value={pageInput} ></Input>}
+            {page.id && <Input type="text" value={pageInput} onChange={onPageInputChange}></Input>}
 
             {allSnippets?.map((snip, snipIdx) => {
               return <Snippet snippetProp={snip} key={snipIdx} deleteCallback={deleteCallback} ></Snippet>

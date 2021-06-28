@@ -31,7 +31,7 @@ const SnippetHeader = styled.div`
     margin-bottom; 5%;
   `
 
-export default function RevisionSnippet({ snippetProp, deleteCallback }) {
+export default function RevisionSnippet({ snippetProp, tickCallback, crossCallback }) {
 
   const db = useContext(DatabaseContext);
   const [snippet, setSnippet] = useState(snippetProp);
@@ -58,15 +58,11 @@ export default function RevisionSnippet({ snippetProp, deleteCallback }) {
     await db.Snippet.update(snippet.id, { text: newSnippet.text });
   }
 
-  const deleteSnippet = () => {
-    deleteCallback(snippet);
-  }
-
   const tickSnippet = async () => {
     var revisionTime = new Date(snippet.reviseAt);
     revisionTime.setDate(revisionTime.getDate() + 7);
-    console.log(revisionTime)
     await db.Snippet.update(snippet.id, { reviseAt: revisionTime.getTime() });
+    tickCallback(snippet);
   }
 
   const crossSnippet = async () => {
@@ -76,6 +72,7 @@ export default function RevisionSnippet({ snippetProp, deleteCallback }) {
 
     console.log(revisionTime)
     await db.Snippet.update(snippet.id, { reviseAt: revisionTime.getTime() });
+    crossCallback(snippet);
   }
 
   return (
@@ -84,8 +81,6 @@ export default function RevisionSnippet({ snippetProp, deleteCallback }) {
         <SnippetHeader>
           <FontAwesomeIcon style={{ "color": '#000000BF', "paddingLeft": '10px' }} icon={faCheck} onClick={tickSnippet} />
           <FontAwesomeIcon style={{ "color": '#000000BF', "paddingLeft": '10px' }} icon={faTimes} onClick={crossSnippet} />
-          <FontAwesomeIcon style={{ "color": '#000000BF', "paddingLeft": '10px' }} icon={faTrash} onClick={deleteSnippet} />
-
         </SnippetHeader>
 
         <SnippetText value={snippet.text} onChange={setText} width={WIDTH} height={height} ref={textarea_ref}>
