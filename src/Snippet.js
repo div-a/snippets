@@ -31,6 +31,13 @@ const SnippetHeader = styled.div`
     margin-bottom; 5%;
   `
 
+const StyledFontAwesomeIcon = styled(FontAwesomeIcon)`
+  color: #00000038;
+  &:hover {
+    color: #000000BF;
+  }
+`
+
 export default function Snippet({ snippetProp, deleteCallback }) {
 
   const db = useContext(DatabaseContext);
@@ -66,9 +73,8 @@ export default function Snippet({ snippetProp, deleteCallback }) {
     <div>
       <Container>
         <SnippetHeader>
-          <FontAwesomeIcon style={{ "color": '#000000BF' }} icon={faTrash} onClick={deleteSnippet} />
+          <StyledFontAwesomeIcon icon={faTrash} onClick={deleteSnippet} />
         </SnippetHeader>
-
         <SnippetText value={snippet.text} onChange={setText} width={WIDTH} height={height} ref={textarea_ref}>
         </SnippetText>
       </Container>

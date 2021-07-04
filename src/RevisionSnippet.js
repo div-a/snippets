@@ -31,6 +31,18 @@ const SnippetHeader = styled.div`
     margin-bottom; 5%;
   `
 
+const Score = styled.div`
+  color: #00000038;
+`
+
+const StyledFontAwesomeIcon = styled(FontAwesomeIcon)`
+  color: #00000038;
+  padding-left: 10px;
+  &:hover {
+    color: #000000BF;
+  }
+`
+
 export default function RevisionSnippet({ snippetProp, tickCallback, crossCallback }) {
 
   const db = useContext(DatabaseContext);
@@ -61,7 +73,7 @@ export default function RevisionSnippet({ snippetProp, tickCallback, crossCallba
   const tickSnippet = async () => {
     var revisionTime = new Date(snippet.reviseAt);
     revisionTime.setDate(revisionTime.getDate() + 7);
-    await db.Snippet.update(snippet.id, { reviseAt: revisionTime.getTime() });
+    await db.Snippet.update(snippet.id, { score: snippet.score * 2 });
     tickCallback(snippet);
   }
 
@@ -70,8 +82,8 @@ export default function RevisionSnippet({ snippetProp, tickCallback, crossCallba
     // revisionTime.setMinutes(revisionTime.getMinutes() + 1);
     revisionTime.setDate(revisionTime.getDate() + 1);
 
-    console.log(revisionTime)
-    await db.Snippet.update(snippet.id, { reviseAt: revisionTime.getTime() });
+    const newScore = snippet.score > 6 ? snippet.score / 2 : snippet.score;
+    await db.Snippet.update(snippet.id, { score: newScore });
     crossCallback(snippet);
   }
 
@@ -79,8 +91,13 @@ export default function RevisionSnippet({ snippetProp, tickCallback, crossCallba
     <div>
       <Container>
         <SnippetHeader>
-          <FontAwesomeIcon style={{ "color": '#000000BF', "paddingLeft": '10px' }} icon={faCheck} onClick={tickSnippet} />
-          <FontAwesomeIcon style={{ "color": '#000000BF', "paddingLeft": '10px' }} icon={faTimes} onClick={crossSnippet} />
+          <Score>
+
+            {snippet.score}
+
+          </Score>
+          <StyledFontAwesomeIcon icon={faCheck} onClick={tickSnippet} />
+          <StyledFontAwesomeIcon icon={faTimes} onClick={crossSnippet} />
         </SnippetHeader>
 
         <SnippetText value={snippet.text} onChange={setText} width={WIDTH} height={height} ref={textarea_ref}>

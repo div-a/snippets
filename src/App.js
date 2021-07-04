@@ -5,7 +5,12 @@ import RevisionSnippet from './RevisionSnippet';
 import styled from 'styled-components'
 import { useEffect, useState, useContext, createContext } from 'react';
 import { Dexie } from 'dexie';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
+import { faPlus } from '@fortawesome/free-solid-svg-icons'
+// import "dexie-export-import";
+import { importDB, exportDB, importInto, peakImportFile } from "dexie-export-import";
+import backup from './backup.json';
 
 
 const { clipboard, ipcRenderer } = window.require("electron")
@@ -13,7 +18,7 @@ const { clipboard, ipcRenderer } = window.require("electron")
 const db = new Dexie('Snippet');
 db.version(1).stores(
   {
-    Snippet: "++id,text,pageId,reviseAt",
+    Snippet: "++id,text,pageId,reviseAt,score",
     Page: "++id,name"
   }
 )
@@ -40,11 +45,16 @@ font-weight: 550;
 const ActionButton = styled.button`
 color: #000000BF;
 font-size: 1em;
-border: 2px solid #000000BF;
+border: 1px solid #00000038;
 border-radius: 3px;
 margin: 0.5em;
 padding: 0.5em;
 background-color: transparent;
+&:hover {
+  color: black;
+  font-weight: 500;
+  background-color: #f7f5f2;
+}
 `;
 
 const PageActions = styled.div`
@@ -80,7 +90,11 @@ background: transparent;
 background-color: ${props => props.isSelected ? '#f7f5f2' : ''};
 padding: 0.5em 1em;
 width: 100%;
-// border-bottom: 1px solid #000000BF;
+color: #2D3748;
+&:hover {
+  color: black;
+  font-weight: 500;
+}
 `;
 
 const ReviseButton = styled(PageButton)`
@@ -96,6 +110,17 @@ font-size: 20px;
 font-weight: 600;
 `;
 
+const AddSnippetButton = styled.button`
+background: transparent;
+width: 100%;
+border:none;
+color: #00000038;
+padding-bottom: 20px;
+&:hover {
+  color: black;
+  font-weight: 500;
+}
+`;
 
 function App() {
 
@@ -104,13 +129,13 @@ function App() {
   const [pageInput, setPageInput] = useState("")
   const [allPages, setAllPages] = useState([])
 
-  const addSnippet = async () => {
-    const newSnippetText = clipboard.readText();
-    if (allSnippets.length == 0 || (allSnippets.length > 0 && newSnippetText != allSnippets[allSnippets.length - 1].text)) {
+  const addSnippet = async (newSnippetText) => {
+    if (newSnippetText == "" || allSnippets.length == 0 || (allSnippets.length > 0 && newSnippetText != allSnippets[allSnippets.length - 1].text)) {
       let newSnippet = {
         text: newSnippetText,
         pageId: page.id,
-        reviseAt: Date.now()
+        reviseAt: Date.now(),
+        score: 100
       }
       var snippetId = await db.Snippet.add(newSnippet)
       newSnippet.id = snippetId;
@@ -119,7 +144,11 @@ function App() {
   };
 
   useEffect(() => {
-    ipcRenderer.on('asynchronous-message', async () => { if (page) await addSnippet(); });
+    ipcRenderer.on('asynchronous-message', async () => {
+      const newSnippetText = clipboard.readText();
+
+      if (page) await addSnippet(newSnippetText);
+    });
 
     return () => {
       ipcRenderer.removeAllListeners();
@@ -163,6 +192,28 @@ function App() {
     setAllPages(await db.Page.toArray())
   }
 
+  function basicImport(data, db) {
+    return Promise.all(data.map(t =>
+      db.table(t.tableName).clear()
+        .then(() => db.table(t.tableName).bulkAdd(t.rows))));
+  }
+
+  const onImport = async (event) => {
+    await basicImport(backup.data.data, db)
+  }
+
+  function download(content, fileName, contentType) {
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(content);
+    a.download = fileName;
+    a.click();
+  }
+
+  const onExport = async (event) => {
+    const blob = await exportDB(db);
+    download(blob, 'backup.json', 'text/plain');
+  }
+
   const onPageInputChange = async (event) => {
     let p = allPages.find(p => p.id == page.id);
     p.name = event.target.value;
@@ -188,7 +239,7 @@ function App() {
 
   const revise = async (event) => {
     setPage(null);
-    const revisionSnippets = await db.Snippet.orderBy("reviseAt").toArray();
+    const revisionSnippets = await db.Snippet.orderBy("score").toArray();
     setAllSnippets(revisionSnippets)
   }
 
@@ -201,14 +252,18 @@ function App() {
             <ReviseButton onClick={revise} key="revise" isSelected={page == null}>Revise</ReviseButton>
             {allPages.map((p) => {
               const selected = (p && page && page.id == p.id);
-              console.log(p)
               return <PageButton onClick={selectPage} key={p.id} isSelected={selected}>{p.name}</PageButton>
             })}
           </PageList>
 
           {!page &&
             <SnippetList>
+              <PageActions>
+                <ActionButton onClick={onImport}> Import </ActionButton>
+                <ActionButton onClick={onExport}> Export </ActionButton>
+              </PageActions>
               <Input type="text" value={"Revise"} ></Input>
+
 
               {allSnippets?.map((snip, snipIdx) => {
                 if (snip.reviseAt < Date.now()) {
@@ -224,14 +279,23 @@ function App() {
 
           {page && <SnippetList>
             <PageActions>
+              <ActionButton onClick={onImport}> Import </ActionButton>
+              <ActionButton onClick={onExport}> Export </ActionButton>
               <ActionButton onClick={onNewPage}> New </ActionButton>
             </PageActions>
 
             {page.id && <Input type="text" value={pageInput} onChange={onPageInputChange}></Input>}
 
             {allSnippets?.map((snip, snipIdx) => {
-              return <Snippet snippetProp={snip} key={snipIdx} deleteCallback={deleteCallback} ></Snippet>
+              return <div>
+
+                <Snippet snippetProp={snip} key={snip.id} deleteCallback={deleteCallback} ></Snippet>
+
+              </div>
             })}
+            <AddSnippetButton>
+              <FontAwesomeIcon icon={faPlus} onClick={() => addSnippet("")} />
+            </AddSnippetButton>
 
             <footer className="App-footer">
             </footer>
