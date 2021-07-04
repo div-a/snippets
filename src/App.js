@@ -7,7 +7,7 @@ import { useEffect, useState, useContext, createContext } from 'react';
 import { Dexie } from 'dexie';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
-import { faPlus } from '@fortawesome/free-solid-svg-icons'
+import { faPlus, faTimes } from '@fortawesome/free-solid-svg-icons'
 // import "dexie-export-import";
 import { importDB, exportDB, importInto, peakImportFile } from "dexie-export-import";
 import backup from './backup.json';
@@ -62,6 +62,8 @@ display: flex;
 justify-content: flex-end;
 flex-direction: row;
 width: 100%;
+align-items: center;
+padding-right:10px;
 `;
 
 const SnippetList = styled.div`
@@ -122,6 +124,13 @@ padding-bottom: 20px;
 }
 `;
 
+const StyledFontAwesomeIcon = styled(FontAwesomeIcon)`
+  color: transparent;
+  &:hover {
+    color: #00000038;
+  }
+`
+
 function App() {
 
   const [allSnippets, setAllSnippets] = useState([])
@@ -147,7 +156,12 @@ function App() {
     ipcRenderer.on('asynchronous-message', async () => {
       const newSnippetText = clipboard.readText();
 
-      if (page) await addSnippet(newSnippetText);
+      if (page) {
+        await addSnippet(newSnippetText);
+      }
+      else {
+        await onNewPage(null);
+      }
     });
 
     return () => {
@@ -243,6 +257,12 @@ function App() {
     setAllSnippets(revisionSnippets)
   }
 
+  const deletePage = async (page) => {
+    await db.Page.delete(page.id);
+    await db.Snippet.where("pageId").anyOf([page.id]).delete();
+    setAllPages(allPages.filter(p => p.id != page.id));
+  }
+
   return (
     <DatabaseContext.Provider value={db}>
       <div className="App">
@@ -252,7 +272,11 @@ function App() {
             <ReviseButton onClick={revise} key="revise" isSelected={page == null}>Revise</ReviseButton>
             {allPages.map((p) => {
               const selected = (p && page && page.id == p.id);
-              return <PageButton onClick={selectPage} key={p.id} isSelected={selected}>{p.name}</PageButton>
+              return <PageActions>
+                <PageButton onClick={selectPage} key={p.id} isSelected={selected}>{p.name}</PageButton>
+                <StyledFontAwesomeIcon icon={faTimes} onClick={() => deletePage(p)} />
+
+              </PageActions>
             })}
           </PageList>
 
