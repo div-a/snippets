@@ -18,7 +18,7 @@ const { clipboard, ipcRenderer } = window.require("electron")
 const db = new Dexie('Snippet');
 db.version(1).stores(
   {
-    Snippet: "++id,text,pageId,reviseAt,score",
+    Snippet: "++id,text,pageId,reviseAt,score,question",
     Page: "++id,name"
   }
 )
@@ -188,7 +188,6 @@ function App() {
       setAllPages(await db.Page.toArray())
       await revise();
     }
-
     fetchData();
   }, [])
 
@@ -198,7 +197,7 @@ function App() {
   }
 
   const onNewPage = async (event) => {
-    const newPageName = new Date().toISOString().substring(0, 19);
+    const newPageName = new Date().toISOString().substring(0, 10);
     const res = await db.Page.add({
       name: newPageName
     });
@@ -290,12 +289,7 @@ function App() {
 
 
               {allSnippets?.map((snip, snipIdx) => {
-                if (snip.reviseAt < Date.now()) {
-                  return <RevisionSnippet snippetProp={snip} key={snip.id} tickCallback={tickCallback} crossCallback={crossCallback} ></RevisionSnippet>
-                }
-                // else {
-                //   return <Snippet snippetProp={snip} key={snipIdx} deleteCallback={deleteCallback} ></Snippet>
-                // }
+                return <RevisionSnippet snippetProp={snip} key={snip.question + snip.text} tickCallback={tickCallback} crossCallback={crossCallback} ></RevisionSnippet>
               })}
 
             </SnippetList>
@@ -312,9 +306,7 @@ function App() {
 
             {allSnippets?.map((snip, snipIdx) => {
               return <div>
-
-                <Snippet snippetProp={snip} key={snip.id} deleteCallback={deleteCallback} ></Snippet>
-
+                <Snippet snippetProp={snip} key={snip.question + snip.text} deleteCallback={deleteCallback} ></Snippet>
               </div>
             })}
             <AddSnippetButton>

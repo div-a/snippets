@@ -21,7 +21,10 @@ const SnippetText = styled.textarea`
     width: ${props => props.width};
     height: ${props => props.height};
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-    color: #000000BF;
+    color: ${props => props.color};;
+    &:hover {
+      color: #000000BF;
+    }
   `
 
 const SnippetHeader = styled.div`
@@ -42,6 +45,42 @@ const StyledFontAwesomeIcon = styled(FontAwesomeIcon)`
     color: #000000BF;
   }
 `
+
+// const QuestionHeader = styled.div`
+//   color: #000000BF;
+//   font-size: 14px;
+//   padding-bottom: 0.75em;
+//   padding-top: 0.75em;
+//   background-color: transparent;
+//   margin-right: auto;
+//   border-bottom: 1px solid #00000038;
+//   border-left: 0px;
+//   border-right: 0px;
+//   border-top: 0px;
+//   width: 100%;
+//   margin-bottom: 1%;
+//   outline: none;
+//   font-weight: 550;
+//   text-align: start;
+// `;
+
+
+const QuestionInput = styled.input`
+  color: #000000BF;
+  font-size: 14px;
+  padding-bottom: 0.75em;
+  padding-top: 0.75em;
+  background-color: transparent;
+  margin-right: auto;
+  border-bottom: 1px solid #00000038;
+  border-left: 0px;
+  border-right: 0px;
+  border-top: 0px;
+  width: 100%;
+  margin-bottom: 1%;
+  outline: none;
+  font-weight: 550;
+`;
 
 export default function RevisionSnippet({ snippetProp, tickCallback, crossCallback }) {
 
@@ -87,20 +126,28 @@ export default function RevisionSnippet({ snippetProp, tickCallback, crossCallba
     crossCallback(snippet);
   }
 
+  const onSnippetQuestionChange = async (event) => {
+    let { ...newSnippet } = snippet;
+    newSnippet.question = event.target.value
+    setSnippet(newSnippet)
+    await db.Snippet.update(snippet.id, { question: event.target.value });
+  }
+
   return (
     <div>
       <Container>
         <SnippetHeader>
+
+          <QuestionInput type="text" value={snippet.question} onChange={onSnippetQuestionChange} />
+
           <Score>
-
             {snippet.score}
-
           </Score>
           <StyledFontAwesomeIcon icon={faCheck} onClick={tickSnippet} />
           <StyledFontAwesomeIcon icon={faTimes} onClick={crossSnippet} />
         </SnippetHeader>
 
-        <SnippetText value={snippet.text} onChange={setText} width={WIDTH} height={height} ref={textarea_ref}>
+        <SnippetText value={snippet.text} onChange={setText} width={WIDTH} height={height} ref={textarea_ref} color={snippet.question ? 'white' : 'black'}>
         </SnippetText>
       </Container>
     </div>

@@ -38,6 +38,23 @@ const StyledFontAwesomeIcon = styled(FontAwesomeIcon)`
   }
 `
 
+const QuestionInput = styled.input`
+  color: #000000BF;
+  font-size: 14px;
+  padding-bottom: 0.75em;
+  padding-top: 0.75em;
+  background-color: transparent;
+  margin-right: auto;
+  border-bottom: 1px solid #00000038;
+  border-left: 0px;
+  border-right: 0px;
+  border-top: 0px;
+  width: 100%;
+  margin-bottom: 1%;
+  outline: none;
+  font-weight: 550;
+`;
+
 export default function Snippet({ snippetProp, deleteCallback }) {
 
   const db = useContext(DatabaseContext);
@@ -69,10 +86,18 @@ export default function Snippet({ snippetProp, deleteCallback }) {
     deleteCallback(snippet);
   }
 
+  const onSnippetQuestionChange = async (event) => {
+    let { ...newSnippet } = snippet;
+    newSnippet.question = event.target.value
+    setSnippet(newSnippet)
+    await db.Snippet.update(snippet.id, { question: event.target.value });
+  }
+
   return (
     <div>
       <Container>
         <SnippetHeader>
+          <QuestionInput type="text" value={snippet.question} onChange={onSnippetQuestionChange} />
           <StyledFontAwesomeIcon icon={faTrash} onClick={deleteSnippet} />
         </SnippetHeader>
         <SnippetText value={snippet.text} onChange={setText} width={WIDTH} height={height} ref={textarea_ref}>
