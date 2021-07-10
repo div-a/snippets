@@ -36,10 +36,25 @@ border-bottom: 1px solid #00000038;
 border-left: 0px;
 border-right: 0px;
 border-top: 0px;
-width: 100%;
 margin-bottom: 3%;
 outline: none;
 font-weight: 550;
+`;
+
+const SearchInput = styled.input`
+color: #000000BF;
+font-size: 18px;
+padding: 0.75em;
+background-color: transparent;
+margin: auto;
+border-bottom: 1px solid #00000038;
+border-left: 0px;
+border-right: 0px;
+border-top: 0px;
+width: 100%;
+margin-bottom: 3%;
+outline: none;
+margin-left: 20px;
 `;
 
 const ActionButton = styled.button`
@@ -136,6 +151,7 @@ function App() {
   const [allSnippets, setAllSnippets] = useState([])
   const [page, setPage] = useState(null)
   const [pageInput, setPageInput] = useState("")
+  const [search, setSearch] = useState("")
   const [allPages, setAllPages] = useState([])
 
   const addSnippet = async (newSnippetText) => {
@@ -144,7 +160,7 @@ function App() {
         text: newSnippetText,
         pageId: page.id,
         reviseAt: Date.now(),
-        score: 100
+        score: 1
       }
       var snippetId = await db.Snippet.add(newSnippet)
       newSnippet.id = snippetId;
@@ -170,10 +186,14 @@ function App() {
   }, [allSnippets]);
 
   useEffect(() => {
+    console.log("FETCH")
     async function fetchSnippets() {
       if (page?.id) {
         const pageSnippets = await db.Snippet.where("pageId").anyOf([page.id]).toArray();
         setAllSnippets(pageSnippets)
+      }
+      else {
+
       }
     }
 
@@ -234,6 +254,18 @@ function App() {
     await db.Page.update(page.id, { name: event.target.value });
   }
 
+  const onSearchChange = async (event) => {
+    setSearch(event.target.value)
+    const page = await db.Page.where("name").anyOf([event.target.value]).toArray();
+    if (page && page.length > 0) {
+      const pageSnippets = await db.Snippet.where({ pageId: page[0]?.id }).toArray();
+      setAllSnippets(pageSnippets)
+    }
+    else if (event.target.value === "") {
+      revise();
+    }
+  }
+
   const deleteCallback = async (snip) => {
     await db.Snippet.delete(snip.id);
     setAllSnippets(allSnippets.filter(s => s.id != snip.id));
@@ -253,6 +285,7 @@ function App() {
   const revise = async (event) => {
     setPage(null);
     const revisionSnippets = await db.Snippet.orderBy("score").toArray();
+    console.log("revising ", revisionSnippets)
     setAllSnippets(revisionSnippets)
   }
 
@@ -285,11 +318,16 @@ function App() {
                 <ActionButton onClick={onImport}> Import </ActionButton>
                 <ActionButton onClick={onExport}> Export </ActionButton>
               </PageActions>
-              <Input type="text" value={"Revise"} ></Input>
 
-
+              <div style={{ 'display': 'flex', 'flex-direction': 'row', 'width': '90%' }}>
+                <Input type="text" value={"Revise"} ></Input>
+                <SearchInput type="text" value={search} onChange={onSearchChange}></SearchInput>
+              </div>
               {allSnippets?.map((snip, snipIdx) => {
-                return <RevisionSnippet snippetProp={snip} key={snip.question + snip.text} tickCallback={tickCallback} crossCallback={crossCallback} ></RevisionSnippet>
+                if (snip.reviseAt < Date.now()) {
+                  return <RevisionSnippet snippetProp={snip} key={snip.question + snip.text} tickCallback={tickCallback} crossCallback={crossCallback} ></RevisionSnippet>
+
+                }
               })}
 
             </SnippetList>

@@ -46,29 +46,10 @@ const StyledFontAwesomeIcon = styled(FontAwesomeIcon)`
   }
 `
 
-// const QuestionHeader = styled.div`
-//   color: #000000BF;
-//   font-size: 14px;
-//   padding-bottom: 0.75em;
-//   padding-top: 0.75em;
-//   background-color: transparent;
-//   margin-right: auto;
-//   border-bottom: 1px solid #00000038;
-//   border-left: 0px;
-//   border-right: 0px;
-//   border-top: 0px;
-//   width: 100%;
-//   margin-bottom: 1%;
-//   outline: none;
-//   font-weight: 550;
-//   text-align: start;
-// `;
 
-
-const QuestionInput = styled.input`
+const QuestionInput = styled.textarea`
   color: #000000BF;
   font-size: 14px;
-  padding-bottom: 0.75em;
   padding-top: 0.75em;
   background-color: transparent;
   margin-right: auto;
@@ -80,6 +61,9 @@ const QuestionInput = styled.input`
   margin-bottom: 1%;
   outline: none;
   font-weight: 550;
+  width: ${props => props.width};
+  height: ${props => props.height};
+  resize: none;
 `;
 
 export default function RevisionSnippet({ snippetProp, tickCallback, crossCallback }) {
@@ -90,13 +74,22 @@ export default function RevisionSnippet({ snippetProp, tickCallback, crossCallba
   const [height, setHeight] = useState('0px');
   const textarea_ref = useRef(null);
 
+  const [questionHeight, setQuestionHeight] = useState('0px');
+  const question_ref = useRef(null);
+
+
   useLayoutEffect(() => {
     textarea_ref.current.style.height = '0px';
     const scrollHeight = textarea_ref.current.scrollHeight;
     textarea_ref.current.removeAttribute('style');
     setHeight(scrollHeight + 2 + 'px');
-  }, [snippet]);
 
+
+    question_ref.current.style.height = '0px';
+    const questionScrollHeight = question_ref.current.scrollHeight;
+    question_ref.current.removeAttribute('style');
+    setQuestionHeight(questionScrollHeight + 2 + 'px');
+  }, [snippet]);
 
   useEffect(() => {
     setSnippet(snippetProp);
@@ -109,20 +102,28 @@ export default function RevisionSnippet({ snippetProp, tickCallback, crossCallba
     await db.Snippet.update(snippet.id, { text: newSnippet.text });
   }
 
+  const scoreToMinutes = {
+    0: 1,
+    1: 5,
+    2: 15,
+    3: 60,
+    4: 60 * 12,
+    5: 60 * 24,
+    6: 60 * 24 * 2,
+    7: 60 * 24 * 7,
+  }
+
   const tickSnippet = async () => {
-    var revisionTime = new Date(snippet.reviseAt);
-    revisionTime.setDate(revisionTime.getDate() + 7);
-    await db.Snippet.update(snippet.id, { score: snippet.score * 2 });
+    const newScore = snippet.score < 7 ? snippet.score + 1 : snippet.score;
+    var revisionTime = new Date().getTime() + (scoreToMinutes[newScore] * 60000);
+    await db.Snippet.update(snippet.id, { score: newScore, reviseAt: revisionTime });
     tickCallback(snippet);
   }
 
   const crossSnippet = async () => {
-    var revisionTime = new Date(snippet.reviseAt);
-    // revisionTime.setMinutes(revisionTime.getMinutes() + 1);
-    revisionTime.setDate(revisionTime.getDate() + 1);
-
-    const newScore = snippet.score > 6 ? snippet.score / 2 : snippet.score;
-    await db.Snippet.update(snippet.id, { score: newScore });
+    const newScore = 0;
+    var revisionTime = new Date().getTime() + (scoreToMinutes[newScore] * 60000);
+    await db.Snippet.update(snippet.id, { score: newScore, reviseAt: revisionTime });
     crossCallback(snippet);
   }
 
@@ -138,10 +139,10 @@ export default function RevisionSnippet({ snippetProp, tickCallback, crossCallba
       <Container>
         <SnippetHeader>
 
-          <QuestionInput type="text" value={snippet.question} onChange={onSnippetQuestionChange} />
+          <QuestionInput type="text" value={snippet.question} onChange={onSnippetQuestionChange} width={WIDTH} height={questionHeight} ref={question_ref} />
 
           <Score>
-            {snippet.score}
+            {new Date(snippet.reviseAt).toISOString()}
           </Score>
           <StyledFontAwesomeIcon icon={faCheck} onClick={tickSnippet} />
           <StyledFontAwesomeIcon icon={faTimes} onClick={crossSnippet} />

@@ -22,6 +22,7 @@ const SnippetText = styled.textarea`
     height: ${props => props.height};
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
     color: #000000BF;
+    resize: none;
   `
 
 const SnippetHeader = styled.div`
@@ -38,10 +39,9 @@ const StyledFontAwesomeIcon = styled(FontAwesomeIcon)`
   }
 `
 
-const QuestionInput = styled.input`
+const QuestionInput = styled.textarea`
   color: #000000BF;
   font-size: 14px;
-  padding-bottom: 0.75em;
   padding-top: 0.75em;
   background-color: transparent;
   margin-right: auto;
@@ -53,6 +53,9 @@ const QuestionInput = styled.input`
   margin-bottom: 1%;
   outline: none;
   font-weight: 550;
+  width: ${props => props.width};
+  height: ${props => props.height};
+  resize: none;c
 `;
 
 export default function Snippet({ snippetProp, deleteCallback }) {
@@ -63,11 +66,21 @@ export default function Snippet({ snippetProp, deleteCallback }) {
   const [height, setHeight] = useState('0px');
   const textarea_ref = useRef(null);
 
+  const [questionHeight, setQuestionHeight] = useState('0px');
+  const question_ref = useRef(null);
+
+
   useLayoutEffect(() => {
     textarea_ref.current.style.height = '0px';
     const scrollHeight = textarea_ref.current.scrollHeight;
     textarea_ref.current.removeAttribute('style');
     setHeight(scrollHeight + 2 + 'px');
+
+
+    question_ref.current.style.height = '0px';
+    const questionScrollHeight = question_ref.current.scrollHeight;
+    question_ref.current.removeAttribute('style');
+    setQuestionHeight(questionScrollHeight + 2 + 'px');
   }, [snippet]);
 
 
@@ -97,7 +110,8 @@ export default function Snippet({ snippetProp, deleteCallback }) {
     <div>
       <Container>
         <SnippetHeader>
-          <QuestionInput type="text" value={snippet.question} onChange={onSnippetQuestionChange} />
+          <QuestionInput type="text" value={snippet.question} onChange={onSnippetQuestionChange} width={WIDTH} height={questionHeight} ref={question_ref} />
+
           <StyledFontAwesomeIcon icon={faTrash} onClick={deleteSnippet} />
         </SnippetHeader>
         <SnippetText value={snippet.text} onChange={setText} width={WIDTH} height={height} ref={textarea_ref}>
