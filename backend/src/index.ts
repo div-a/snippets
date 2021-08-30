@@ -3,8 +3,8 @@ import { createConnection, getConnectionOptions } from "typeorm";
 import express from "express";
 import { ApolloServer } from "apollo-server-express";
 import { buildSchema } from "type-graphql";
-import { HelloWorldResolver } from "./resolvers/HelloWorldResolver";
 import { PageResolver } from "./resolvers/PageResolver";
+import { SnippetResolver } from "./resolvers/SnippetResolver";
 
 (async () => {
   const app = express();
@@ -16,7 +16,7 @@ import { PageResolver } from "./resolvers/PageResolver";
 
   const apolloServer = new ApolloServer({
     schema: await buildSchema({
-      resolvers: [HelloWorldResolver, PageResolver],
+      resolvers: [SnippetResolver, PageResolver],
       validate: true,
     }),
     context: ({ req, res }) => ({ req, res }),

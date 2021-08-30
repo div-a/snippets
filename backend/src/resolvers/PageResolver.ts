@@ -30,7 +30,11 @@ export class PageResolver {
 
   @Query(() => [Page])
   async pages() {
-    let res = await Page.find();
+    let res = await Page.find({
+      relations: ["snippets"],
+    });
+    console.log(res);
+
     return res;
   }
 }
